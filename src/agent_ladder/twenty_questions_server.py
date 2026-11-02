@@ -30,19 +30,19 @@ class Answer(BaseModel):
     )
 )
 async def ask_question(question: str, ctx: Context) -> str:
-    global questions_asked
-    if questions_asked >= MAX_QUESTIONS:
+    global QUESTIONS_ASKED
+    if QUESTIONS_ASKED >= MAX_QUESTIONS:
         raise ToolError(
             f"You have used all {MAX_QUESTIONS} questions. Do not call "
             "ask_question again. Make your final guess in plain text instead."
         )
-    questions_asked += 1
+    QUESTIONS_ASKED += 1
 
     result = await ctx.elicit(message=question, schema=Answer)
     if result.action == "accept":
         return result.data.answer
     if result.action == "decline":
-        questions_asked -= 1
+        QUESTIONS_ASKED -= 1
         return (
             "The room declined to answer. That question did not count. "
             "Ask a different question."
