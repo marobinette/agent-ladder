@@ -1,0 +1,19 @@
+[project]
+name = "agent-ladder"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "marobinette", email = "robinette.michael.a@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic>=2.3.0",
+]
+
+[project.scripts]
+agent-ladder = "agent_ladder:main"
+
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"
