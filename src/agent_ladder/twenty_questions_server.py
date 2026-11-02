@@ -16,20 +16,20 @@ from pydantic import BaseModel
 
 mcp = MCPServer("twenty-questions")
 MAX_QUESTIONS = 20
+QUESTIONS_ASKED = 0
 
 
 class Answer(BaseModel):
     answer: Literal["yes", "no", "sometimes"]
 
-
-questions_asked = 0
-
-
-@mcp.tool()
+@mcp.tool(
+    description=(
+        "Ask a yes-or-no question that helps you deduce the secret identity of a "
+        "person, place, or thing. The room answers with exactly one of: 'yes', "
+        f"'no', or 'sometimes'. You get {MAX_QUESTIONS} questions."
+    )
+)
 async def ask_question(question: str, ctx: Context) -> str:
-    """Ask a yes-or-no question that helps you deduce the secret identity of a
-    person, place, or thing. The room answers with exactly one of: 'yes', 'no',
-    or 'sometimes'. You get 20 questions."""
     global questions_asked
     if questions_asked >= MAX_QUESTIONS:
         raise ToolError(
@@ -42,7 +42,11 @@ async def ask_question(question: str, ctx: Context) -> str:
     if result.action == "accept":
         return result.data.answer
     if result.action == "decline":
-        return "The room declined to answer. Ask a different question."
+        questions_asked -= 1
+        return (
+            "The room declined to answer. That question did not count. "
+            "Ask a different question."
+        )
     return "The room cancelled the game. Stop asking questions."
 
 
