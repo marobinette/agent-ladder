@@ -1,4 +1,4 @@
-# usage: uv run --env-file .env src/agent_ladder/model_call.py
+# usage: uv run --env-file .env twenty-questions-harness
 import anthropic
 
 client = anthropic.Anthropic()
@@ -13,6 +13,8 @@ SYSTEM_PROMPT = (
     "confirmed, stop asking and announce the answer."
 )
 
+def main():
+    play_game()
 
 def send_message(model, messages, tools, system, tool_choice=None, max_tokens=1024):
     message = client.messages.create(
@@ -116,4 +118,4 @@ def play_game():
 
 
 if __name__ == "__main__":
-    play_game()
+    main()

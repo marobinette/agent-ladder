@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "twenty-questions": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "twenty-questions-server"
+      ],
+      "env": {}
+    }
+  }
+}
