@@ -12,12 +12,14 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
+    { name = "httpx2" },
     { name = "mcp", extra = ["cli"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = ">=2.3.0" },
+    { name = "httpx2", specifier = ">=2.16.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=2.3.0" },
 ]
 

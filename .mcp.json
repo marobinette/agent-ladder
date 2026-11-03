@@ -8,6 +8,28 @@
         "twenty-questions-server"
       ],
       "env": {}
+    },
+    "openalex": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--env-file",
+        ".env",
+        "openalex-server"
+      ],
+      "env": {}
+    },
+    "reading-list": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--env-file",
+        ".env",
+        "reading-list-server"
+      ],
+      "env": {}
     }
   }
 }
