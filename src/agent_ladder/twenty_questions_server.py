@@ -46,7 +46,7 @@ def ask_the_room(question: str) -> Elicit[Answer]:
         f"'no', or 'sometimes'. You get {MAX_QUESTIONS} questions."
     )
 )
-async def ask_question(
+def ask_question(
     question: str,
     room: Annotated[ElicitationResult[Answer], Resolve(ask_the_room)],
 ) -> str:
@@ -54,17 +54,8 @@ async def ask_question(
     if room.action == "accept":
         questions_asked += 1
         return room.data.answer
-    if room.action == "decline":
-        return (
-            "The room declined to answer. That question did not count. "
-            "Ask a different question."
-        )
     return "The room cancelled the game. Stop asking questions."
 
 
 def main():
     mcp.run()
-
-
-if __name__ == "__main__":
-    main()
