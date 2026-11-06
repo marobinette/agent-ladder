@@ -37,17 +37,18 @@ layout: center
 
 <div class="text-lg mt-2">
 
-When you give an agent a task, it works through three phases: **gather context**, **take action**, and **verify results**. It uses tools throughout.
+The model **evaluates**, **calls tools**, gets the **results** back, and repeats until it responds without a tool call.
 
 </div>
 
-```mermaid {scale: 0.9}
+```mermaid {scale: 0.6}
 flowchart LR
-  P([Your prompt]) --> G[Gather context]
-  G --> A[Take action]
-  A --> V[Verify results]
-  V -->|repeat| G
-  V --> D([Task complete])
+  P([Your prompt]) --> E
+  subgraph Loop["agentic loop"]
+    E[Claude evaluates] -->|tool calls| T["Executes tool call"]
+    T -->|tool result| E
+  end
+  E -->|no tool calls| F([Final answer])
 ```
 
 <v-click>
@@ -62,7 +63,7 @@ Keep this loop in mind while we play a game.
 
 <div class="absolute bottom-4 left-14 text-xs opacity-60">
 
-Source: code.claude.com/docs/en/how-claude-code-works#the-agentic-loop
+Source: code.claude.com/docs/en/agent-sdk/agent-loop
 
 </div>
 
@@ -115,7 +116,7 @@ claude.ai could play the game, but it couldn't call our ask_question tool, enfor
 
 <div class="text-xl">
 
-**Tool:** a capability you describe to the model. **Your code** runs it, not Claude.
+**Tool:** a capability you describe to the model. **The code** runs it, not Claude.
 
 </div>
 
@@ -438,7 +439,7 @@ def main():
 - **Type hints become the input schema.** `question: str` is the JSON Schema.
 - **The docstring becomes the description,** the text Claude reads.
 - **The return value becomes the tool result.**
-- `mcp.run()` handles the protocol over stdio.
+- `mcp.run()` starts the server.
 
 </div>
 </div>
@@ -481,13 +482,13 @@ mcp.run()
 
 <div v-click="1">The decorator <b>reads the signature</b>: schema from <code>question: str</code>, resolver from <code>Resolve(ask_the_room)</code>. Nothing is called yet.</div>
 
-<div v-click="2" class="mt-2"><code>mcp.run()</code> waits. From here, the SDK calls your code.</div>
+<div v-click="2" class="mt-2"><code>mcp.run()</code> waits. From here, the SDK calls the code.</div>
 
 **Phase 2: Each tool call**
 
 <div v-click="3">Claude sends <code>ask_question(question="Is it alive?")</code>.</div>
 
-<div v-click="4" class="mt-2">The SDK runs <code>ask_the_room</code>, matching <code>question</code> <b>by name</b>. It returns an <code>Elicit</code>.</div>
+<div v-click="4" class="mt-2">The SDK runs <code>ask_the_room</code>. It returns an <code>Elicit</code>.</div>
 
 <div v-click="5" class="mt-2">Claude Code shows the form. The room answers <code>"yes"</code>.</div>
 
@@ -535,7 +536,7 @@ Your function signature is **instructions for the SDK**. It reads them at startu
 
 <div class="mt-2 opacity-80">
 
-The harness is **imperative**: every step is a line you wrote. The server is **declarative**: you describe what you need, and the SDK decides when to run it.
+The MCP server is **declarative**: you describe what you need, and the SDK decides when to run it.
 
 </div>
 
@@ -565,7 +566,7 @@ That it **sparks research ideas:** AI governance, oversight, multi-agent systems
 
 <div v-click>
 
-Or, at the very least, that you leave with **more context** for what's happening in this space.
+Or, at the very least, I hope you feel **more in the loop**.
 
 </div>
 
