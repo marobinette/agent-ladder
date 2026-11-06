@@ -16,19 +16,55 @@ layout: center
 
 <p class="text-2xl opacity-70">who owns the loop, though?</p>
 
-<div class="mt-10 text-lg opacity-80">
-  <div v-click class="font-bold mb-2">Other titles I considered</div>
-  <div v-click>My agent is everywhere, you're never there</div>
-  <div v-click>Are you down with MCP? Yeah, you know me</div>
-  <div v-click>Loop, there it is</div>
+---
+
+# A few definitions first
+
+<div class="text-lg">
+
+| Term | Definition |
+| --- | --- |
+| **Tool** | A function plus a description the model reads: a name, a description and an input schema |
+| **Context** | Everything the model sees on a call: system prompt, tool definitions, messages. The model has no memory, so the harness resends all of it every time |
+| **Harness** | The code around the model that provides the tools, manages context and runs the loop |
+| **Agentic loop** | The model responds, the harness runs the requested tools, results go back into context, repeat until there are no tool calls |
+
 </div>
 
 ---
-layout: center
-class: text-center
----
 
-# a game of 20 questions with AI?
+# The agentic loop
+
+<div class="text-lg mt-2">
+
+When you give an agent a task, it works through three phases: **gather context**, **take action**, and **verify results**. It uses tools throughout.
+
+</div>
+
+```mermaid {scale: 0.9}
+flowchart LR
+  P([Your prompt]) --> G[Gather context]
+  G --> A[Take action]
+  A --> V[Verify results]
+  V -->|repeat| G
+  V --> D([Task complete])
+```
+
+<v-click>
+
+<div class="mt-6 text-xl text-center">
+
+Keep this loop in mind while we play a game.
+
+</div>
+
+</v-click>
+
+<div class="absolute bottom-4 left-14 text-xs opacity-60">
+
+Source: code.claude.com/docs/en/how-claude-code-works#the-agentic-loop
+
+</div>
 
 ---
 
@@ -53,13 +89,19 @@ class: text-center
 
 <v-click>
 
-```mermaid {scale: 0.8}
+```mermaid {scale: 0.9}
 flowchart LR
-  H[Harness<br/>our Python loop] -->|conversation + tool_result| C[Claude]
-  C -->|tool_use: ask_question| H
-  H -->|asks| R((The room))
-  R -->|yes / no| H
+  H[Harness<br/>our Python loop] -->|"context"| C[Claude]
+  C -->|"tool_use: ask_question"| H
+  H -->|"asks"| R((The room))
+  R -->|"yes / no"| H
 ```
+
+<div class="text-center opacity-80">
+
+The answer goes into context as a `tool_result`, then back to step 1. Repeat until Claude answers without a tool call.
+
+</div>
 
 </v-click>
 
@@ -67,62 +109,6 @@ flowchart LR
 Claude decided what to ask. Our code decided what "asking" means: print it, wait for the room.
 claude.ai could play the game, but it couldn't call our ask_question tool, enforce the question limit, or run inside our code.
 -->
-
----
-
-# Outline
-
-<v-clicks>
-
-1. **Why use tools and agents?**
-2. **From harness to MCP server**
-
-</v-clicks>
-
----
-layout: section
----
-
-# Why use tools and agents?
-
----
-
-# A model, on its own
-
-<div class="text-2xl mt-6">
-
-**Model:** text in, text out.
-
-</div>
-
-<v-click>
-
-It can't act on the world by itself. It can't:
-
-</v-click>
-
-<v-clicks>
-
-- hear the room's answer
-- look up papers published this year
-- put a meeting on your calendar
-
-</v-clicks>
-
-<v-click>
-
-<div class="mt-8 text-xl">
-
-Everything it knows is in its training or in the text you send it.
-
-</div>
-
-</v-click>
-
-<!--
-claude.ai could "play" 20 questions, but only by talking with one person in a chat box. It can't reach the room, or anything else outside the conversation.
--->
-
 ---
 
 # A tool
@@ -160,48 +146,9 @@ claude.ai could "play" 20 questions, but only by talking with one person in a ch
 
 <v-click>
 
-A name, a description, an input schema. **No implementation.** Claude only sees the description.
+The description works like a prompt. It's all Claude has to decide when and how to use the tool, so writing it well matters.
 
 </v-click>
-
----
-
-# An agent
-
-<div class="text-xl">
-
-**Agent:** a model running in a loop. Claude chooses, your code acts, and the conversation grows, until Claude decides it's done.
-
-</div>
-
-<v-click>
-
-```mermaid {scale: 0.8}
-flowchart LR
-  C["Claude chooses<br/>(one model call)"] -->|"stop_reason: tool_use"| T[Your code runs the tool]
-  T --> S["Result added to<br/>the conversation"]
-  S --> C
-  C -->|"stop_reason: end_turn"| A[Final answer]
-```
-
-</v-click>
-
-<v-click>
-
-Every response includes a **`stop_reason`**. It tells your code what Claude chose: `tool_use` means "run my tool," `end_turn` means "I'm done."
-
-</v-click>
-
-<v-click>
-
-In 20 questions, **every question depends on the answers before it**, so Claude has to choose them one at a time.
-
-</v-click>
-
-<!--
-"Claude chooses" is one send_message() call. Claude reads the whole conversation and either picks the next question (tool_use) or announces its guess (end_turn).
-Claude only requests the tool; the harness runs it.
--->
 
 ---
 
@@ -306,14 +253,13 @@ messages = [
 | Call | Input tokens |
 | --- | --- |
 | 1 | 536 |
-| 2 | ~670 |
-| 3 | ~800 |
-| 10 | ~1,700 |
-| 20 | ~3,000 |
+| 2 | 606 |
+| 3 | 666 |
+| 10 | 1,132 |
 
 <div class="text-xs opacity-60 mt-2">
 
-Call 1 is measured; the rest are estimates.
+From a real run: 9 questions to Hermione Granger, $0.046 total.
 
 </div>
 
@@ -330,14 +276,27 @@ Every call sends the **whole list**. Each `tool_use` is answered by a `tool_resu
 
 # Why it grows
 
-<v-clicks>
+<div class="text-lg space-y-4 mt-4">
 
-- **The API is stateless.** Each call starts from zero; Claude only knows what's in `messages`.
-- **Claude needs the history to play.** Question 5 only makes sense if it remembers answers 1 to 4.
-- **Every `tool_use` must be answered.** The next message carries a `tool_result` with the same `tool_use_id`.
-- **The cost:** every turn resends everything, so cost and latency climb, and long sessions eventually fill the context window.
+<div v-click>
 
-</v-clicks>
+**The API is stateless.** Each call starts from zero; Claude only knows what's in `messages`.
+
+</div>
+
+<div v-click>
+
+**Claude needs the history to play.** Question 5 only makes sense if it remembers answers 1 to 4.
+
+</div>
+
+<div v-click>
+
+**The cost:** every turn resends everything, so cost and latency climb, and long sessions eventually fill the context window.
+
+</div>
+
+</div>
 
 <v-click>
 
@@ -351,28 +310,33 @@ That's why the loop has **two** `messages.append` calls: one for Claude's turn, 
 
 ---
 
-# So why use tools and agents?
+# Why use tools and agents?
 
-<v-clicks>
+<div class="text-xl mt-6 space-y-6">
 
-- **Tools** let the model reach beyond the text you send it: people, APIs, files, your systems.
-- **Agents** handle tasks where the next step depends on the last result.
-- **Your code stays in charge:** it decides what a tool does, and it sets the limits.
+<div v-click>
 
-</v-clicks>
+A model on its own is essentially **text in, text out**. It can't hear the room's answer, look up this year's papers, or put a meeting on your calendar. Everything it knows is in its training or in the text you send it.
 
----
+</div>
 
-# The core six
+<div v-click>
 
-| Term | One line |
-| --- | --- |
-| Model | Text in, text out |
-| Tool | A capability you describe; your code runs it |
-| Tool call | Claude's request to run a tool |
-| Tool result | Your code's answer, matched by `tool_use_id` |
-| Agent | A model in a loop with tools |
-| Harness | The code that runs the loop |
+**Tools** let the model reach beyond the text you send it: people, APIs, files, your systems.
+
+</div>
+
+<div v-click>
+
+**The code stays in charge:** it decides what a tool does, and it sets the limits.
+
+</div>
+
+</div>
+
+<!--
+claude.ai could "play" 20 questions, but only by talking with one person in a chat box. It can't reach the room, or anything else outside the conversation.
+-->
 
 ---
 layout: section
@@ -387,7 +351,7 @@ layout: section
 <div grid="~ cols-2 gap-8" class="mt-6">
 <div v-click>
 
-### About 20 questions
+### Specific to 20 questions
 
 - the `ask_question` schema
 - `get_answer()` and `input()`
@@ -422,7 +386,7 @@ What if it ran the loop, and we only supplied the tool?
 
 ---
 
-# MCP in one slide
+# MCP oversimplified
 
 <div class="text-xl">
 
@@ -441,7 +405,7 @@ flowchart LR
 <v-clicks>
 
 - **Host:** the app you work in. It runs the loop.
-- **Server:** your code. It offers tools.
+- **Server:** the code you write. It offers tools.
 - **stdio:** Claude Code starts your server and talks to it over stdin and stdout.
 
 </v-clicks>
@@ -471,7 +435,7 @@ def main():
 
 - `MCPServer("...")` creates the server. Clients show it by name.
 - `@mcp.tool()` turns a function into a tool.
-- **Type hints become the input schema.** `question: str` is the JSON Schema you wrote by hand.
+- **Type hints become the input schema.** `question: str` is the JSON Schema.
 - **The docstring becomes the description,** the text Claude reads.
 - **The return value becomes the tool result.**
 - `mcp.run()` handles the protocol over stdio.
@@ -487,155 +451,129 @@ Never print() to stdout in a stdio server: stdout is the protocol pipe. Use stde
 
 ---
 
-# The harness, translated
+# How the server works
 
-<div class="text-sm">
+<div grid="~ cols-2 gap-6" class="mt-2">
+<div>
 
-| Harness | Server |
-| --- | --- |
-| `tools = [{... "input_schema" ...}]` | `def ask_question(question: str)` + docstring |
-| `while` loop, `messages`, `stop_reason` | *gone*: Claude Code runs the loop |
-| `MAX_QUESTIONS` + `tool_choice: none` | `ToolError`: enforces the limit, *asks* for a guess |
-| `SYSTEM_PROMPT`, `MODEL` | *gone*: the client chooses |
-| `get_answer()` with `input()` | `Elicit` (game-specific, next slide) |
+```python {all|6-10|15|8|1-4|9|11-13}{lines:false}
+def ask_the_room(question: str) -> Elicit[Answer]:
+    if questions_asked >= MAX_QUESTIONS:
+        raise ToolError("Out of questions. Guess.")
+    return Elicit(message=question, schema=Answer)
 
-</div>
-
-<v-click>
-
-<div class="mt-4 text-lg">
-
-Less code, **less control.** The harness *guaranteed* a final guess; the server only *asks* for one.
-
-</div>
-
-</v-click>
-
----
-
-# Game-specific: `Elicit` and `Resolve`
-
-This game needs one thing most tools don't: **an answer from a person.**
-
-<v-clicks>
-
-- A stdio server can't call `input()`; stdin is the protocol pipe.
-- **`Elicit`** is a request: "ask the user this, and expect yes or no." Claude Code shows the form.
-- **`Resolve`** fills `room` with the room's answer before the body runs. Claude never sees `room`.
-
-</v-clicks>
-
-<v-click>
-
-```python
+@mcp.tool(description="Ask a yes-or-no question...")
 def ask_question(
-    question: str,                                    # from Claude
-    room: Annotated[Answer, Resolve(ask_the_room)],  # from the room
+    question: str,
+    room: Annotated[Answer, Resolve(ask_the_room)],
 ) -> str:
+    global questions_asked
+    questions_asked += 1
     return room.answer
+
+mcp.run()
 ```
 
-</v-click>
+</div>
+<div class="text-sm">
 
-<v-click>
+**Phase 1: Startup** (once)
 
-<div class="mt-4 text-lg">
+<div v-click="1">The decorator <b>reads the signature</b>: schema from <code>question: str</code>, resolver from <code>Resolve(ask_the_room)</code>. Nothing is called yet.</div>
 
-The next two servers call APIs, not people. **They don't need either.**
+<div v-click="2" class="mt-2"><code>mcp.run()</code> waits. From here, the SDK calls your code.</div>
+
+**Phase 2: Each tool call**
+
+<div v-click="3">Claude sends <code>ask_question(question="Is it alive?")</code>.</div>
+
+<div v-click="4" class="mt-2">The SDK runs <code>ask_the_room</code>, matching <code>question</code> <b>by name</b>. It returns an <code>Elicit</code>.</div>
+
+<div v-click="5" class="mt-2">Claude Code shows the form. The room answers <code>"yes"</code>.</div>
+
+<div v-click="6" class="mt-2">Only now does the <b>body</b> run: count the question, return <code>"yes"</code>.</div>
 
 </div>
+</div>
 
-</v-click>
+<!--
+The confusing part: code runs where you can't see it. It runs in the SDK, which reads your function signature and acts on it.
+The limit check sits in the resolver so it runs before the room is asked. The counter sits in the body because the body runs exactly once per call.
+-->
 
 ---
 
 # What the SDK does for you
 
-<div grid="~ cols-2 gap-8" class="mt-2 text-sm">
-<div v-click>
+```python
+# Phase 1, startup: the decorator does this
+TOOLS["ask_question"] = {
+    "function": ask_question,
+    "schema": {"question": "string"},       # from `question: str`
+    "resolvers": {"room": ask_the_room},    # from `Resolve(ask_the_room)`
+}
 
-### Startup: once
-
-1. Imports and constants load.
-2. `@mcp.tool` **reads the signature**:
-   - `question: str` → the schema Claude sees
-   - `room` + `Resolve` → "fill this in with `ask_the_room`"
-3. `mcp.run()` waits. Nothing is called yet.
-
-</div>
-<div v-click>
-
-### Each tool call
-
-4. Claude sends `ask_question(question="Is it alive?")`.
-5. The SDK calls `ask_the_room(question=...)`, matched **by name**.
-6. Claude Code shows the form; the room answers.
-7. The SDK calls `ask_question(question, room)`. **The body runs.**
-
-</div>
-</div>
+# Phase 2, when Claude calls the tool
+def handle_tool_call(name, args):           # args = {"question": "Is it alive?"}
+    tool = TOOLS[name]
+    request = tool["resolvers"]["room"](question=args["question"])   # ask_the_room
+    reply = ask_user_through_client(request)                          # the form
+    return tool["function"](question=args["question"], room=reply)   # the body
+```
 
 <v-click>
 
-<div class="mt-6 text-lg">
+<div class="mt-4 text-lg">
 
-Your signature is **instructions for the SDK**. The harness was imperative: you wrote every step. The server is declarative: you describe what you need.
+Your function signature is **instructions for the SDK**. It reads them at startup, then follows them each time Claude calls the tool.
+
+</div>
+
+</v-click>
+
+<v-click>
+
+<div class="mt-2 opacity-80">
+
+The harness is **imperative**: every step is a line you wrote. The server is **declarative**: you describe what you need, and the SDK decides when to run it.
 
 </div>
 
 </v-click>
 
 <!--
-Nothing runs "inside" the def. The SDK reads it at startup and does the wiring in its own code each time Claude calls the tool.
-Rename ask_the_room's parameter to q and the server fails at startup with InvalidSignature: the names are checked before any game starts.
+This is pseudo-code, not the real SDK. Everything that feels hidden lives in handle_tool_call.
 -->
 
 ---
 
-# Register it once
+# My hopes for you
 
-```bash
-claude mcp add --scope project twenty-questions -- uv run twenty-questions-server
-```
+<div class="text-2xl space-y-8 mt-10">
 
-```json
-// .mcp.json: checked in, shared with anyone who clones the repo
-"twenty-questions": {
-  "type": "stdio",
-  "command": "uv",
-  "args": ["run", "twenty-questions-server"]
-}
-```
+<div v-click>
 
-<v-click>
+That you **build cool tools** that make life a little easier.
 
-Then, in Claude Code: *"Let's play 20 questions using the ask_question tool."*
+</div>
 
-</v-click>
+<div v-click>
+
+That it **sparks research ideas:** AI governance, oversight, multi-agent systems.
+
+</div>
+
+<div v-click>
+
+Or, at the very least, that you leave with **more context** for what's happening in this space.
+
+</div>
+
+</div>
 
 ---
+layout: center
+class: text-center
+---
 
-# The same pattern, every server
-
-Every server: `MCPServer(...)` → `@mcp.tool()` with typed arguments → `mcp.run()`
-
-<div class="text-sm mt-4">
-
-| | `twenty-questions` | `openalex` | `reading-list` |
-| --- | --- | --- | --- |
-| Tool | `ask_question` | `search_papers` | `add_paper` |
-| Description from | `description=` | docstring | docstring |
-| `ToolError` | ✓ | | ✓ |
-| Talks to | **a person** (`Elicit`) | **an API** | **an API** |
-
-</div>
-
-<v-click>
-
-<div class="mt-4 text-lg">
-
-Learn `MCPServer` once. The rest is ordinary Python.
-
-</div>
-
-</v-click>
+# Thank you!

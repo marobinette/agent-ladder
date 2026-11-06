@@ -15,14 +15,11 @@ from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel
 
 mcp = MCPServer("twenty-questions")
-
 MAX_QUESTIONS = 20
 questions_asked = 0
 
-
 class Answer(BaseModel):
     answer: Literal["yes", "no"]
-
 
 def ask_the_room(question: str) -> Elicit[Answer]:
     if questions_asked >= MAX_QUESTIONS:
@@ -31,7 +28,6 @@ def ask_the_room(question: str) -> Elicit[Answer]:
             "ask_question again. Make your final guess in plain text instead."
         )
     return Elicit(message=question, schema=Answer)
-
 
 @mcp.tool(
     description=(
@@ -47,7 +43,6 @@ def ask_question(
     global questions_asked
     questions_asked += 1
     return room.answer
-
 
 def main():
     mcp.run()

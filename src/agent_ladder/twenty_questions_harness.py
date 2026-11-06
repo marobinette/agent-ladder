@@ -5,7 +5,7 @@ client = anthropic.Anthropic()
 MODEL = "claude-opus-5-5"
 INPUT_PRICE = 4 / 1_000_000    # $ per input token (Opus 5.5)
 OUTPUT_PRICE = 20 / 1_000_000  # $ per output token (Opus 5.5)
-MAX_QUESTIONS = 2
+MAX_QUESTIONS = 20
 VALID_ANSWERS = {"yes", "no"}
 
 SYSTEM_PROMPT = (
