@@ -3,8 +3,10 @@ import anthropic
 
 client = anthropic.Anthropic()
 MODEL = "claude-opus-5-5"
-MAX_QUESTIONS = 20
-VALID_ANSWERS = {"yes", "no", "sometimes"}
+INPUT_PRICE = 4 / 1_000_000    # $ per input token (Opus 5.5)
+OUTPUT_PRICE = 20 / 1_000_000  # $ per output token (Opus 5.5)
+MAX_QUESTIONS = 2
+VALID_ANSWERS = {"yes", "no"}
 
 SYSTEM_PROMPT = (
     "You are playing 20 Questions. A room of people has chosen a secret "
@@ -35,12 +37,23 @@ def print_block_text(message):
             print(block.text)
 
 
+def print_cost(response, total_cost):
+    usage = response.usage
+    cost = usage.input_tokens * INPUT_PRICE + usage.output_tokens * OUTPUT_PRICE
+    total_cost += cost
+    print(
+        f"[cost: {usage.input_tokens} in / {usage.output_tokens} out "
+        f"= ${cost:.4f} | total ${total_cost:.4f}]"
+    )
+    return total_cost
+
+
 def get_answer(question):
     while True:
-        answer = input(f"{question} (yes/no/sometimes): ").strip().lower()
+        answer = input(f"{question} (yes/no): ").strip().lower()
         if answer in VALID_ANSWERS:
             return answer
-        print("Please answer yes, no, or sometimes.")
+        print("Please answer yes or no.")
 
 
 tools = [
@@ -49,7 +62,7 @@ tools = [
         "description": (
             "Ask a yes-or-no question that helps you deduce the secret identity "
             "of a person, place, or thing. The room answers with exactly one of: "
-            f"'yes', 'no', or 'sometimes'. You get {MAX_QUESTIONS} questions."
+            f"'yes' or 'no'. You get {MAX_QUESTIONS} questions."
         ),
         "input_schema": {
             "type": "object",
@@ -73,12 +86,13 @@ def play_game():
         }
     ]
     questions_asked = 0
+    total_cost = 0
 
     while questions_asked < MAX_QUESTIONS:
         response = send_message(
             model=MODEL, messages=messages, tools=tools, system=SYSTEM_PROMPT
         )
-        print_block_text(response)
+        total_cost = print_cost(response, total_cost)
         messages.append({"role": "assistant", "content": response.content})
 
         if response.stop_reason != "tool_use":
@@ -114,6 +128,7 @@ def play_game():
         system=SYSTEM_PROMPT,
         tool_choice={"type": "none"},
     )
+    print_cost(response, total_cost)
     print_block_text(response)
 
 

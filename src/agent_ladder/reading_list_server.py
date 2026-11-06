@@ -11,7 +11,7 @@ try:
     READING_LIST_URL = os.environ["READING_LIST_URL"].rstrip("/")
     READING_LIST_TOKEN = os.environ["READING_LIST_TOKEN"]
 except KeyError as missing:
-    sys.exit(f"{missing.args[0]} is not set. Run: uv run --env-file .env reading-list-server")
+    sys.exit(f"{missing.args[0]} is not set. Run: uv run --env-file .env reading-list-servNoer")
 
 print("reading-list: config loaded", file=sys.stderr)
 
@@ -25,7 +25,7 @@ async def add_paper(
     url: str | None = None,
     abstract: str | None = None,
 ) -> dict:
-    """Add one paper to Mikey's reading list with status "to-read".
+    """Add one paper to reading list with status "to-read".
 
     Only title is required. When adding a paper from search_papers results,
     pass its title, authors, year, venue, url, and abstract unchanged.

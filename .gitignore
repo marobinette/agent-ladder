@@ -10,3 +10,7 @@ wheels/
 .venv
 
 .env
+# Slidev
+slides/node_modules/
+slides/dist/
+slides/.slidev/

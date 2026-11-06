@@ -10,7 +10,6 @@ register: claude mcp add --scope project twenty-questions -- uv run twenty-quest
 """
 from typing import Annotated, Literal
 
-from mcp.server.elicitation import ElicitationResult
 from mcp.server.mcpserver import Elicit, MCPServer, Resolve
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel
@@ -22,15 +21,10 @@ questions_asked = 0
 
 
 class Answer(BaseModel):
-    answer: Literal["yes", "no", "sometimes"]
+    answer: Literal["yes", "no"]
 
 
 def ask_the_room(question: str) -> Elicit[Answer]:
-    """Resolver: runs before the tool body and asks the human.
-
-    The SDK may run this more than once per call (once per round trip on
-    2026-07-28+ connections), so it must not change any state.
-    """
     if questions_asked >= MAX_QUESTIONS:
         raise ToolError(
             f"You have used all {MAX_QUESTIONS} questions. Do not call "
@@ -42,19 +36,17 @@ def ask_the_room(question: str) -> Elicit[Answer]:
 @mcp.tool(
     description=(
         "Ask a yes-or-no question that helps you deduce the secret identity of a "
-        "person, place, or thing. The room answers with exactly one of: 'yes', "
-        f"'no', or 'sometimes'. You get {MAX_QUESTIONS} questions."
+        "person, place, or thing. The room answers with exactly one of: 'yes' "
+        f"or 'no'. You get {MAX_QUESTIONS} questions."
     )
 )
 def ask_question(
     question: str,
-    room: Annotated[ElicitationResult[Answer], Resolve(ask_the_room)],
+    room: Annotated[Answer, Resolve(ask_the_room)],
 ) -> str:
     global questions_asked
-    if room.action == "accept":
-        questions_asked += 1
-        return room.data.answer
-    return "The room cancelled the game. Stop asking questions."
+    questions_asked += 1
+    return room.answer
 
 
 def main():
