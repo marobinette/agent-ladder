@@ -18,6 +18,8 @@ twenty-questions-harness = "agent_ladder.twenty_questions_harness:main"
 twenty-questions-server = "agent_ladder.twenty_questions_server:main"
 openalex-server = "agent_ladder.openalex_server:main"
 reading-list-server = "agent_ladder.reading_list_server:main"
+agent = "agent_ladder.agent:main"
+
 
 [build-system]
 requires = ["uv_build>=0.12.1,<0.13.0"]
