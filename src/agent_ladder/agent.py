@@ -1,5 +1,8 @@
 import anthropic
 
+class ToolError(Exception):
+    pass
+
 class Agent:
     def __init__(
             self,
@@ -19,6 +22,7 @@ class Agent:
         self.max_tokens = max_tokens
         self.model = model
         self.messages = []
+        self.web_searches = 0
 
     def receive(self, text: str):
         self.messages.append(
@@ -47,6 +51,10 @@ class Agent:
 
         response = self.client.messages.create(**kwargs)
 
+        server_use = getattr(response.usage, "server_tool_use", None)
+        if server_use is not None:
+            self.web_searches += server_use.web_search_requests or 0
+
         return response
          
     def take_turn(self) -> str:
@@ -59,12 +67,17 @@ class Agent:
             }
         )
 
-        while response.stop_reason == "tool_use":
+        while response.stop_reason in ("tool_use", "pause_turn"):
+            if response.stop_reason == "pause_turn":
+                response = self._call_model()
+                self.messages.append({"role": "assistant", "content": response.content})
+                continue
             results = []
+
             for block in response.content:
                 if block.type == "tool_use":
                     handler = self.tool_handlers.get(block.name)
-                    if handler is NotImplemented:
+                    if handler is None:
                         results.append(
                             {
                                 "type": "tool_result",
@@ -74,12 +87,18 @@ class Agent:
                             }
                         )
                     else:
-                        result = handler(**block.input)
+                        is_error = False
+                        try:
+                            result = handler(**block.input)
+                        except ToolError as e:
+                            result = str(e)
+                            is_error = True
                         results.append(
                             {
                                 "type": "tool_result",
                                 "tool_use_id": block.id,
-                                "content": str(result)
+                                "content": str(result),
+                                "is_error": is_error
                             }
                         )
             self.messages.append({"role": "user", "content": results})
@@ -108,7 +127,7 @@ def main():
         system_prompt="You are terse.",
         client=client,
         tools=tools,
-        tool_handlers={"get_time": get_time},
+        tool_handlers={},
     )
 
     agent.receive("What time is it?")
