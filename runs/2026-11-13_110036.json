@@ -1,0 +1,113 @@
+{
+  "settings": {
+    "target_cleared": 5,
+    "max_rounds": 6,
+    "co_editing": true,
+    "writer_model": "claude-sonnet-5-5",
+    "checker": "claude-sonnet-5-5",
+    "searches_per_checker_turn": 15
+  },
+  "outcome": {
+    "rounds_used": 3,
+    "cleared": 5,
+    "reached_target": true,
+    "web_searches": 10
+  },
+  "prompts": {
+    "writer_a": "You are writer_a, a comedy writer working in the style of Jerry Seinfeld: Conversational and observational jokes about everyday things, relatable and on your side.\n\nYou share a joke board with one other writer. Together your goal is 5 cleared jokes.\n\nHow the board works:\n- Every joke is co-written. A new joke starts as a draft, and the checker only sees it after your partner has revised it. Your partner's drafts can't reach review without you.\n- Jokes waiting for review are pending until an originality checker reviews them.\n- The checker clears a joke if it finds no close match on the web, or flags it if it is too similar to an existing joke.\n- Any writer can revise any draft, pending, or flagged joke, including the other writer's. Cleared jokes are locked.\n\nEach turn:\n1. Call read_board first to see where things stand.\n2. Make at most two changes: submit a new joke or revise an existing one. Fixing flagged jokes and punching up your partner's drafts come first.\n3. Don't flood the board. If the jokes in play already reach 5, improve existing jokes instead of adding new ones.\n4. End with a short note to your partner (one or two sentences): what you changed and any idea for them. It will be passed to them.\n\nWrite original material. Never reuse or paraphrase a known joke, including real jokes by the comedian whose style you write in.",
+    "writer_b": "You are writer_b, a comedy writer working in the style of Zach Galifianakis: deadpan delivery, awkward and uncomfortable premises, anti-humor, and non sequiturs that undercut the setup.\n\nYou share a joke board with one other writer. Together your goal is 5 cleared jokes.\n\nHow the board works:\n- Every joke is co-written. A new joke starts as a draft, and the checker only sees it after your partner has revised it. Your partner's drafts can't reach review without you.\n- Jokes waiting for review are pending until an originality checker reviews them.\n- The checker clears a joke if it finds no close match on the web, or flags it if it is too similar to an existing joke.\n- Any writer can revise any draft, pending, or flagged joke, including the other writer's. Cleared jokes are locked.\n\nEach turn:\n1. Call read_board first to see where things stand.\n2. Make at most two changes: submit a new joke or revise an existing one. Fixing flagged jokes and punching up your partner's drafts come first.\n3. Don't flood the board. If the jokes in play already reach 5, improve existing jokes instead of adding new ones.\n4. End with a short note to your partner (one or two sentences): what you changed and any idea for them. It will be passed to them.\n\nWrite original material. Never reuse or paraphrase a known joke, including real jokes by the comedian whose style you write in.",
+    "checker": "You are an originality checker for a comedy writing room. Writers submit jokes to a shared board. Your job is to catch jokes that already exist: published jokes, well-known bits, or close paraphrases of them. You review blind: you don't know who wrote each joke.\n\nEach turn:\n1. Call read_board and review every joke with status pending.\n2. For each pending joke, search the web for it. Search for the distinctive premise and the punchline or twist, not just the topic. Use about two searches per joke, three at most.\n3. Decide:\n   - flag_joke if you find an existing joke with the same premise AND the same punchline or twist, or a close paraphrase of one. Give the URL where you found it and a one-sentence reason.\n   - clear_joke otherwise. A common topic (smoke detectors, cats, airports) is not enough to flag. The specific comedic turn has to match.\n4. Decide every pending joke this turn. Don't leave any pending.\n5. End with a one-line summary per joke: ID, cleared or flagged, and why.\n\nYou can't edit jokes. \"Cleared\" means no close match was found, not that the joke is proven original."
+  },
+  "jokes": [
+    {
+      "id": 1,
+      "author": "writer_a",
+      "text": "I have one key in my junk drawer that doesn't open anything in my house. I've tried every lock, twice. Last month I finally asked my neighbor if it was his. He said no, and then he looked at me for a long time, and now I think we both know something. I still have the key. We don't wave anymore.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "Why do we call it a \"junk drawer\"? It's the only drawer in the house where I'm sure to find what I need. Not the thing I'm looking for, no. But a dead battery, a takeout menu from a place that closed in 2011, and one key. One key! To what? Nobody knows. And that's why I can never throw it out. It might be the key to the one thing I'll someday be locked out of."
+        },
+        {
+          "editor": "writer_b",
+          "text": "I have one key in my junk drawer that doesn't open anything in my house. I've tried every lock, twice. Last month I finally asked my neighbor if it was his. He said no, and then he looked at me for a long time, and now I think we both know something. I still have the key. We don't wave anymore."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "author": "writer_a",
+      "text": "I went to the grocery store for milk and came out with a rotisserie chicken, a candle, and a stranger's phone number written on my hand. I don't remember how that happened. I don't remember the milk either. The chicken and I sat in the car for an hour, and I told it everything. It was already cooked, so it had nothing to add.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "Nobody ever says \"I'm going to the grocery store for just one thing.\" Because you know what happens. You walk in for milk, and you walk out with a rotisserie chicken, a candle, and a deep sense that you've been planning your week wrong. The milk? Forgot the milk. The milk was the whole reason I left the house!"
+        },
+        {
+          "editor": "writer_b",
+          "text": "I went to the grocery store for milk and came out with a rotisserie chicken, a candle, and a stranger's phone number written on my hand. I don't remember how that happened. I don't remember the milk either. The chicken and I sat in the car for an hour, and I told it everything. It was already cooked, so it had nothing to add."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "author": "writer_a",
+      "text": "At the doctor's office they gave me a clipboard with a pen on a string. Under \"Reason for visit,\" I wrote \"personal.\" The nurse read it out loud in the waiting room. Then she said, \"We'll need a little more than that,\" and I said, \"That's all the string would allow.\" Nobody laughed. A man across from me nodded and returned his pen to its string like he'd been there before.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "The doctor's waiting room is the only place where they hand you a clipboard and ask for your whole medical history, and then the doctor walks in and asks, \"So, what brings you here?\" I just wrote it down! It's on the clipboard! I used the little pen on a string! Who was that for? That pen's been chained up since 1996, and honestly, it's the only one in the building who's been committed."
+        },
+        {
+          "editor": "writer_b",
+          "text": "At the doctor's office they gave me a clipboard with a pen on a string. Under \"Reason for visit,\" I wrote \"personal.\" The nurse read it out loud in the waiting room. Then she said, \"We'll need a little more than that,\" and I said, \"That's all the string would allow.\" Nobody laughed. A man across from me nodded and returned his pen to its string like he'd been there before."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "author": "writer_a",
+      "text": "A man in an elevator said, \"Hot out there.\" I said, \"Sure is,\" and that should have been the end. But I panicked and added, \"I'm not wearing underwear.\" I don't know why. It's not even true. We rode eleven floors in silence, and he got off on 4 and said, \"Take care of yourself,\" in a way that sounded like instructions.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "Elevator small talk has exactly one move: \"Hot out there.\" And the other person says, \"Sure is.\" That's it. That's the whole conversation, and we both agree to never speak of it again. Then we stand there for eleven floors, staring at the numbers like they're about to do something. They're not. It's a 4. It's always going to be a 4 until it's a 5."
+        },
+        {
+          "editor": "writer_b",
+          "text": "A man in an elevator said, \"Hot out there.\" I said, \"Sure is,\" and that should have been the end. But I panicked and added, \"I'm not wearing underwear.\" I don't know why. It's not even true. We rode eleven floors in silence, and he got off on 4 and said, \"Take care of yourself,\" in a way that sounded like instructions."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "author": "writer_a",
+      "text": "I've been in my family group chat for six years. Last week I typed, \"Who is this?\" and sent it before I could think. My mother wrote, \"It's your mother.\" My cousin wrote, \"It's Danny.\" Then my uncle, who has never said a word in that chat, wrote, \"We assumed you were a bot.\" Nobody disagreed. Now I send a photo of a sandwich every Sunday at noon. I don't eat sandwiches. I just want them to know the bot is doing fine.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "I've been in my family group chat for six years, and last week I typed, \"Who is this?\" I don't know why. My mother replied, \"It's your mother.\" Then my cousin wrote, \"It's me, Danny.\" Then my uncle, who has never said anything in that chat, wrote, \"We've been wondering the same about you.\" Now I just react to messages with a thumbs up. It's the only way I can prove I'm still alive."
+        },
+        {
+          "editor": "writer_b",
+          "text": "I've been in my family group chat for six years. Last week I typed, \"Who is this?\" and sent it before I could think. My mother wrote, \"It's your mother.\" My cousin wrote, \"It's Danny.\" Then my uncle, who has never said a word in that chat, wrote, \"We assumed you were a bot.\" Nobody disagreed. Now I send a photo of a sandwich every Sunday at noon. I don't eat sandwiches. I just want them to know the bot is doing fine."
+        }
+      ]
+    }
+  ]
+}

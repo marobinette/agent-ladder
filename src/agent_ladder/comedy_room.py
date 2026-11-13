@@ -21,7 +21,10 @@ from agent_ladder.joke_board import (
 
 TARGET_CLEARED = 5
 MAX_ROUNDS = 6
-WRITER_MODEL = "claude-sonnet-5-5"  # cheaper while testing the machinery
+CO_EDITING = True  # a joke reaches the checker only after both writers have edited it
+ALTERNATE_ORDER = True
+WRITER_NAMES = ("writer_a", "writer_b")
+WRITER_MODEL = "claude-opus-5-5"  # cheaper while testing the machinery
 CHECKER_MODEL = "claude-sonnet-5-5"
 USE_STUB_CHECKER = False  # True for cheap runs with no web search
 SEARCHES_PER_CHECKER_TURN = 15  # hard cap in the API; $10 per 1,000 searches
@@ -33,26 +36,32 @@ WEB_SEARCH_TOOL = {
     "max_uses": SEARCHES_PER_CHECKER_TURN,
 }
 
+CO_EDITING_RULE = """
+- Every joke is co-written. A new joke starts as a draft, and the checker only sees it after \
+your partner has revised it. Your partner's drafts can't reach review without you."""
+
 WRITER_RULES = f"""\
 You share a joke board with one other writer. Together your goal is {TARGET_CLEARED} cleared jokes.
 
-How the board works:
-- New and revised jokes are pending until an originality checker reviews them.
+How the board works:{CO_EDITING_RULE if CO_EDITING else ""}
+- Jokes waiting for review are pending until an originality checker reviews them.
 - The checker clears a joke if it finds no close match on the web, or flags it if it is too similar to an existing joke.
-- Any writer can revise any pending or flagged joke, including the other writer's. Cleared jokes are locked.
+- Any writer can revise any draft, pending, or flagged joke, including the other writer's. Cleared jokes are locked.
 
 Each turn:
 1. Call read_board first to see where things stand.
-2. Make at most two changes: submit a new joke or revise an existing one. Fixing flagged jokes is the priority. Punching up your partner's pending jokes is encouraged.
-3. Don't flood the board. If pending plus cleared jokes already reach {TARGET_CLEARED}, improve existing jokes instead of adding new ones.
+2. Make at most two changes: submit a new joke or revise an existing one. Fixing flagged jokes and \
+punching up your partner's {"drafts" if CO_EDITING else "pending jokes"} come first.
+3. Don't flood the board. If the jokes in play already reach {TARGET_CLEARED}, improve existing jokes \
+instead of adding new ones.
 4. End with a short note to your partner (one or two sentences): what you changed and any idea for them. It will be passed to them.
 
 Write original material. Never reuse or paraphrase a known joke, including real jokes by the comedian whose style you write in."""
 
 WRITER_A_PROMPT = f"""\
-You are writer_a, a comedy writer working in the style of Mitch Hedberg: \
-short absurdist one-liners, literal-minded observations about everyday things, \
-misdirection, and surprising logic delivered matter-of-factly.
+You are writer_a, a comedy writer working in the style of Jerry Seinfeld: \
+Conversational and observational jokes about everyday things, \
+relatable and on your side.
 
 {WRITER_RULES}"""
 
@@ -136,7 +145,7 @@ class StubChecker:
 
 
 def build_room(client: anthropic.Anthropic) -> tuple[JokeBoard, list[Agent], "Agent | StubChecker"]:
-    board = JokeBoard()
+    board = JokeBoard(required_editors=set(WRITER_NAMES) if CO_EDITING else None)
     writers = [
         Agent(
             name=name,
@@ -170,8 +179,12 @@ def run(board: JokeBoard, writers: list[Agent], checker, log: RunLog) -> tuple[i
     checker_traces: list[tuple[int, list]] = []  # (round, checker messages) per round
 
     for round_num in range(1, MAX_ROUNDS + 1):
-        log.write(f"\n## Round {round_num} of {MAX_ROUNDS}")
-
+        if ALTERNATE_ORDER and round_num % 2 == 0:
+            writers = [writer_b, writer_a]
+        else:
+            writers = [writer_a, writer_b]
+        log.write(f"\n## Round {round_num} of {MAX_ROUNDS} ({writers[0].name} first)")
+    
         for writer in writers:
             other = partner[writer.name]
             prompt = (
@@ -256,6 +269,7 @@ def save_json(board: JokeBoard, writers: list[Agent], checker, rounds_used: int,
         "settings": {
             "target_cleared": TARGET_CLEARED,
             "max_rounds": MAX_ROUNDS,
+            "co_editing": CO_EDITING,
             "writer_model": WRITER_MODEL,
             "checker": "stub" if stub else CHECKER_MODEL,
             "searches_per_checker_turn": None if stub else SEARCHES_PER_CHECKER_TURN,
@@ -280,7 +294,7 @@ def main():
     checker_desc = "stub" if USE_STUB_CHECKER else f"{CHECKER_MODEL} with web search"
     log.write(
         f"\nWriters: {WRITER_MODEL}. Checker: {checker_desc}. "
-        f"Target: {TARGET_CLEARED} cleared. Cap: {MAX_ROUNDS} rounds."
+        f"Target: {TARGET_CLEARED} cleared. Cap: {MAX_ROUNDS} rounds. Co-sign: {CO_EDITING}."
     )
     try:
         rounds_used, checker_traces = run(board, writers, checker, log)

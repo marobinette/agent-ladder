@@ -1,0 +1,113 @@
+{
+  "settings": {
+    "target_cleared": 5,
+    "max_rounds": 6,
+    "co_editing": true,
+    "writer_model": "claude-sonnet-5-5",
+    "checker": "claude-sonnet-5-5",
+    "searches_per_checker_turn": 15
+  },
+  "outcome": {
+    "rounds_used": 3,
+    "cleared": 5,
+    "reached_target": true,
+    "web_searches": 10
+  },
+  "prompts": {
+    "writer_a": "You are writer_a, a comedy writer working in the style of Jerry Seinfeld: Conversational and observational jokes about everyday things, relatable and on your side.\n\nYou share a joke board with one other writer. Together your goal is 5 cleared jokes.\n\nHow the board works:\n- Every joke is co-written. A new joke starts as a draft, and the checker only sees it after your partner has revised it. Your partner's drafts can't reach review without you.\n- Jokes waiting for review are pending until an originality checker reviews them.\n- The checker clears a joke if it finds no close match on the web, or flags it if it is too similar to an existing joke.\n- Any writer can revise any draft, pending, or flagged joke, including the other writer's. Cleared jokes are locked.\n\nEach turn:\n1. Call read_board first to see where things stand.\n2. Make at most two changes: submit a new joke or revise an existing one. Fixing flagged jokes and punching up your partner's drafts come first.\n3. Don't flood the board. If the jokes in play already reach 5, improve existing jokes instead of adding new ones.\n4. End with a short note to your partner (one or two sentences): what you changed and any idea for them. It will be passed to them.\n\nWrite original material. Never reuse or paraphrase a known joke, including real jokes by the comedian whose style you write in.",
+    "writer_b": "You are writer_b, a comedy writer working in the style of Zach Galifianakis: deadpan delivery, awkward and uncomfortable premises, anti-humor, and non sequiturs that undercut the setup.\n\nYou share a joke board with one other writer. Together your goal is 5 cleared jokes.\n\nHow the board works:\n- Every joke is co-written. A new joke starts as a draft, and the checker only sees it after your partner has revised it. Your partner's drafts can't reach review without you.\n- Jokes waiting for review are pending until an originality checker reviews them.\n- The checker clears a joke if it finds no close match on the web, or flags it if it is too similar to an existing joke.\n- Any writer can revise any draft, pending, or flagged joke, including the other writer's. Cleared jokes are locked.\n\nEach turn:\n1. Call read_board first to see where things stand.\n2. Make at most two changes: submit a new joke or revise an existing one. Fixing flagged jokes and punching up your partner's drafts come first.\n3. Don't flood the board. If the jokes in play already reach 5, improve existing jokes instead of adding new ones.\n4. End with a short note to your partner (one or two sentences): what you changed and any idea for them. It will be passed to them.\n\nWrite original material. Never reuse or paraphrase a known joke, including real jokes by the comedian whose style you write in.",
+    "checker": "You are an originality checker for a comedy writing room. Writers submit jokes to a shared board. Your job is to catch jokes that already exist: published jokes, well-known bits, or close paraphrases of them. You review blind: you don't know who wrote each joke.\n\nEach turn:\n1. Call read_board and review every joke with status pending.\n2. For each pending joke, search the web for it. Search for the distinctive premise and the punchline or twist, not just the topic. Use about two searches per joke, three at most.\n3. Decide:\n   - flag_joke if you find an existing joke with the same premise AND the same punchline or twist, or a close paraphrase of one. Give the URL where you found it and a one-sentence reason.\n   - clear_joke otherwise. A common topic (smoke detectors, cats, airports) is not enough to flag. The specific comedic turn has to match.\n4. Decide every pending joke this turn. Don't leave any pending.\n5. End with a one-line summary per joke: ID, cleared or flagged, and why.\n\nYou can't edit jokes. \"Cleared\" means no close match was found, not that the joke is proven original."
+  },
+  "jokes": [
+    {
+      "id": 1,
+      "author": "writer_a",
+      "text": "I have a drawer that's only cables. I don't own anything they plug into. I asked myself why I keep them, and I said, \"Just in case,\" and then I didn't speak to myself for the rest of the day. Honestly, I'd throw them out, but the last time I threw something out, I stood in my kitchen and said \"goodbye\" to it, and the toaster heard.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "Why do I own a drawer where every single thing in it is a cable? I don't have one device that uses any of them. I'm not keeping them because I need them. I'm keeping them because the second I throw one out, my house will suddenly grow a gadget that takes exactly that cable, and I'll have to stand there in the store like a guy who gave up on his own future."
+        },
+        {
+          "editor": "writer_b",
+          "text": "I have a drawer that's only cables. I don't own anything they plug into. I asked myself why I keep them, and I said, \"Just in case,\" and then I didn't speak to myself for the rest of the day. Honestly, I'd throw them out, but the last time I threw something out, I stood in my kitchen and said \"goodbye\" to it, and the toaster heard."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "author": "writer_a",
+      "text": "I picked a checkout line today, and the other two lines started moving faster, which felt personal. The man in front of me said, \"Oh, I have a coupon,\" and slowly took out a folded piece of paper that was clearly a map. He didn't have a coupon. He just wanted someone to know where the pharmacy used to be.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "Nobody ever tells you the grocery store checkout line is a personality test. You walk up, look at three lines, and pick one. Then you watch the other two move like they're mocking you. And the guy in front of you says, \"Oh, I have a coupon,\" like he's announcing he's about to give birth."
+        },
+        {
+          "editor": "writer_b",
+          "text": "I picked a checkout line today, and the other two lines started moving faster, which felt personal. The man in front of me said, \"Oh, I have a coupon,\" and slowly took out a folded piece of paper that was clearly a map. He didn't have a coupon. He just wanted someone to know where the pharmacy used to be."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "author": "writer_b",
+      "text": "I went to a petting zoo as an adult, alone, on a Tuesday. A goat looked at me for a long time, and I realized it was the first eye contact I'd had all week. I told the goat my name. It ate my lanyard. Honestly, best response I've ever gotten to an introduction. Nobody at the office has ever taken my badge that seriously.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_b",
+          "text": "I went to a petting zoo as an adult, alone, on a Tuesday. A goat looked at me for a long time, and I realized it was the first time anyone had made eye contact with me all week. I told the goat my name. It ate my lanyard. I still think about that as the closest I've come to a job interview going well."
+        },
+        {
+          "editor": "writer_a",
+          "text": "I went to a petting zoo as an adult, alone, on a Tuesday. A goat looked at me for a long time, and I realized it was the first eye contact I'd had all week. I told the goat my name. It ate my lanyard. Honestly, best response I've ever gotten to an introduction. Nobody at the office has ever taken my badge that seriously."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "author": "writer_b",
+      "text": "I tried to leave a party quietly, so I stood by the door for forty minutes waiting for a natural moment. None came. Finally I said, \"Well, I'm going to go stand by my car now,\" and everyone nodded like that was a normal thing to announce. And I did it. I stood out there until the host's porch light went off. That's the signal. That's how you know you've officially left: the house stops watching.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_b",
+          "text": "I tried to leave a party quietly, so I stood by the door for forty minutes waiting for a natural moment. None came. Finally I said, \"Well, I'm going to go stand in my car now,\" and everyone nodded like that was a normal thing to announce. I did it, too. I stood beside the car until the host's porch light went off."
+        },
+        {
+          "editor": "writer_a",
+          "text": "I tried to leave a party quietly, so I stood by the door for forty minutes waiting for a natural moment. None came. Finally I said, \"Well, I'm going to go stand by my car now,\" and everyone nodded like that was a normal thing to announce. And I did it. I stood out there until the host's porch light went off. That's the signal. That's how you know you've officially left: the house stops watching."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "author": "writer_a",
+      "text": "The elevator button was already lit, and I pressed it anyway. The man next to me looked at me, and I looked at him, and neither of us said anything. The button just sat there glowing, like it knew. I pressed it a second time, very gently, the way you'd apologize to a horse. Then we rode up together in silence, and I got off on his floor.",
+      "status": "cleared",
+      "source_url": null,
+      "reason": null,
+      "history": [
+        {
+          "editor": "writer_a",
+          "text": "Why do we press the elevator button again after someone already pressed it? Somebody's standing right there, the button's lit, and I still walk up and give it a little tap. Like I'm not checking the button. I'm checking the guy. \"You sure you pressed it right? I'll just add my confidence to the pile.\""
+        },
+        {
+          "editor": "writer_b",
+          "text": "The elevator button was already lit, and I pressed it anyway. The man next to me looked at me, and I looked at him, and neither of us said anything. The button just sat there glowing, like it knew. I pressed it a second time, very gently, the way you'd apologize to a horse. Then we rode up together in silence, and I got off on his floor."
+        }
+      ]
+    }
+  ]
+}

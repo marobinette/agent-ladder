@@ -32,6 +32,10 @@ class Agent:
             }
         )
 
+    def reset(self) -> None:
+        """Forget the conversation. Tools, prompt and counters stay."""
+        self.messages = []
+
     def join_block_text(self, response) -> str:
         text = ""
         for block in response.content:

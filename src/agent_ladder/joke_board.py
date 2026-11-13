@@ -12,14 +12,19 @@ class Joke:
     id: int
     author: str
     text: str
-    status: str = "pending"  # pending -> cleared | flagged; flagged -> pending on revise
+    # draft -> pending once all required editors have touched it (co-sign rule)
+    # pending -> cleared | flagged; flagged -> pending on revise
+    status: str = "pending"
     source_url: str | None = None
     reason: str | None = None
     history: list[dict] = field(default_factory=list)  # text versions: {"editor", "text"}
 
 
 class JokeBoard:
-    def __init__(self):
+    def __init__(self, required_editors: set[str] | None = None):
+        # Co-sign rule: if set, a joke stays a draft (invisible to the checker)
+        # until every name here appears in its history. None turns the rule off.
+        self.required_editors = required_editors
         self.jokes: dict[int, Joke] = {}
         self.next_id: int = 1
 
@@ -31,9 +36,10 @@ class JokeBoard:
         joke_id = self.next_id
         joke = Joke(id=joke_id, author=author, text=text)
         joke.history.append({"editor": author, "text": text})
+        joke.status = self._status_after_edit(joke)
         self.jokes[joke_id] = joke
         self.next_id += 1
-        return f"Joke submitted with ID {joke_id}; pending review."
+        return f"Joke submitted with ID {joke_id}; {self._status_message(joke)}"
 
     def revise_joke(self, editor: str, joke_id: int, text: str) -> str:
         joke = self._get_joke(joke_id)
@@ -45,8 +51,8 @@ class JokeBoard:
         joke.history.append({"editor": editor, "text": text})
         joke.source_url = None
         joke.reason = None
-        joke.status = "pending"
-        return f"Joke {joke_id} revised; now pending review."
+        joke.status = self._status_after_edit(joke)
+        return f"Joke {joke_id} revised; {self._status_message(joke)}"
 
     # --- checker tools ---
 
@@ -75,9 +81,14 @@ class JokeBoard:
         # so a bad value is a bug in our code: ValueError, not ToolError.
         if viewer not in VIEWERS:
             raise ValueError(f"Unknown viewer: {viewer!r}")
-        if not self.jokes:
+        # Drafts aren't ready for review, so the checker doesn't see them.
+        visible = [
+            joke for joke in self.jokes.values()
+            if viewer == "writer" or joke.status != "draft"
+        ]
+        if not visible:
             return "No jokes on the board."
-        return "\n".join(self._format_joke(joke, viewer) for joke in self.jokes.values())
+        return "\n".join(self._format_joke(joke, viewer) for joke in visible)
 
     # --- for the orchestrator (not tools) ---
 
@@ -92,6 +103,21 @@ class JokeBoard:
             raise ToolError(f"No joke with ID {joke_id}.")
         return joke
 
+    def _missing_editors(self, joke: Joke) -> list[str]:
+        if self.required_editors is None:
+            return []
+        editors = {version["editor"] for version in joke.history}
+        return sorted(self.required_editors - editors)
+
+    def _status_after_edit(self, joke: Joke) -> str:
+        return "draft" if self._missing_editors(joke) else "pending"
+
+    def _status_message(self, joke: Joke) -> str:
+        if joke.status == "draft":
+            needed = " and ".join(self._missing_editors(joke))
+            return f"it is a draft and goes to review after {needed} revises it."
+        return "now pending review."
+
     def _format_joke(self, joke: Joke, viewer: str) -> str:
         # Allowlist: each role sees only the fields named here.
         parts = [f"ID: {joke.id}"]
@@ -99,6 +125,8 @@ class JokeBoard:
             parts.append(f"Author: {joke.author}")  # checker reviews blind
         parts.append(f"Status: {joke.status}")
         parts.append(f"Text: {joke.text}")
+        if joke.status == "draft" and viewer == "writer":
+            parts.append(f"Needs edit from: {', '.join(self._missing_editors(joke))}")
         if joke.status == "flagged":
             if viewer == "writer":
                 parts.append(f"Feedback: {FLAG_FEEDBACK}")
@@ -119,7 +147,7 @@ READ_BOARD_SCHEMA = {
 WRITER_TOOLS = [
     {
         "name": "submit_joke",
-        "description": "Submit a new joke to the board. Returns its ID. New jokes are pending until the checker reviews them.",
+        "description": "Submit a new joke to the board. Returns its ID and whether it is a draft or pending review.",
         "input_schema": {
             "type": "object",
             "properties": {"text": {"type": "string", "description": "The full joke."}},
@@ -128,7 +156,7 @@ WRITER_TOOLS = [
     },
     {
         "name": "revise_joke",
-        "description": "Replace the text of any pending or flagged joke, including one another writer submitted. The joke goes back to pending. Cleared jokes cannot be revised.",
+        "description": "Replace the text of any draft, pending, or flagged joke, including one another writer submitted. Returns the joke's new status. Cleared jokes cannot be revised.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -231,6 +259,21 @@ def main():
         print(version)
 
     print(f"\ncleared: {board.cleared_count()}")
+
+    print("\n== co-sign rule ==")
+    board = JokeBoard(required_editors={"writer_a", "writer_b"})
+    a = writer_handlers(board, "writer_a")
+    b = writer_handlers(board, "writer_b")
+    checker = checker_handlers(board)
+    attempt("A submits", lambda: a["submit_joke"](text="My shadow follows me everywhere, but never helps carry anything."))
+    attempt("A revises own draft", lambda: a["revise_joke"](joke_id=1, text="My shadow follows me everywhere and has never once offered to carry a bag."))
+    attempt("checker clears draft", lambda: checker["clear_joke"](joke_id=1))
+    print("writer view:\n" + a["read_board"]())
+    print("checker view: " + checker["read_board"]())
+    attempt("B revises A's draft", lambda: b["revise_joke"](joke_id=1, text="My shadow follows me everywhere and has never once offered to carry a bag. It just watches."))
+    print("checker view: " + checker["read_board"]())
+    attempt("checker clears", lambda: checker["clear_joke"](joke_id=1))
+    print("editors:", [v["editor"] for v in board.jokes[1].history])
 
     print("\n== bad viewer (harness bug, should raise ValueError) ==")
     try:
