@@ -2,7 +2,7 @@
 
 Three AI agents work together to produce five original jokes. Two comedy writers draft and rewrite jokes on a shared board, and an originality checker searches the web to make sure each joke doesn't already exist.
 
-It's a small project meant to test multi-agent collaboration: the agents are built from a hand-written agent loop, and the rules of the room live in code rather than in the prompts.
+It's a small project meant to test multi-agent collaboration: the agents are built from a human-written agent loop, and the rules of the room live in code rather than in the prompts.
 
 ## Setup
 
